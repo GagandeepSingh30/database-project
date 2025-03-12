@@ -1,0 +1,100 @@
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <h4 class="mb-0"><i class="fas fa-ticket-alt me-2"></i>All Tickets</h4>
+    <% if (user.role === 'helpdesk' || user.role === 'manager') { %>
+      <a href="/tickets/create" class="btn btn-light btn-sm">
+        <i class="fas fa-plus-circle me-1"></i>Create Ticket
+      </a>
+    <% } %>
+  </div>
+  <div class="card-body">
+    <div class="mb-3">
+      <label for="ticket-status-filter" class="form-label">Filter by Status:</label>
+      <select id="ticket-status-filter" class="form-select form-select-sm w-auto">
+        <option value="all">All Statuses</option>
+        <option value="open">Open</option>
+        <option value="assigned">Assigned</option>
+        <option value="in_progress">In Progress</option>
+        <option value="on_hold">On Hold</option>
+        <option value="resolved">Resolved</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    
+    <% if (tickets.length === 0) { %>
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No tickets found.
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Created By</th>
+              <th>Assigned To</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% tickets.forEach(function(ticket) { %>
+              <tr class="ticket-row" data-status="<%= ticket.status %>">
+                <td>#<%= ticket.id %></td>
+                <td>
+                  <a href="/tickets/<%= ticket.id %>">
+                    <%= ticket.title %>
+                  </a>
+                  <% if (ticket.Equipment) { %>
+                    <span class="d-block text-muted small">
+                      <i class="fas fa-desktop me-1"></i><%= ticket.Equipment.name %>
+                    </span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="ticket-status ticket-status-<%= ticket.status %>">
+                    <%= ticket.status.replace('_', ' ') %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-<%= 
+                    ticket.priority === 'low' ? 'success' : 
+                    ticket.priority === 'medium' ? 'warning' : 
+                    ticket.priority === 'high' ? 'orange' : 'danger' 
+                  %>">
+                    <%= ticket.priority %>
+                  </span>
+                </td>
+                <td>
+                  <% if (ticket.creator) { %>
+                    <%= ticket.creator.firstName %> <%= ticket.creator.lastName %>
+                  <% } else { %>
+                    <span class="text-muted">Unknown</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (ticket.assignee) { %>
+                    <%= ticket.assignee.firstName %> <%= ticket.assignee.lastName %>
+                  <% } else { %>
+                    <span class="text-muted">Unassigned</span>
+                  <% } %>
+                </td>
+                <td>
+                  <%= new Date(ticket.createdAt).toLocaleDateString() %>
+                </td>
+                <td>
+                  <a href="/tickets/<%= ticket.id %>" class="btn btn-sm btn-primary">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div> 

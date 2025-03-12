@@ -1,0 +1,83 @@
+<div class="row justify-content-center">
+  <div class="col-md-10">
+    <div class="card shadow-sm">
+      <div class="card-body text-center p-5">
+        <h1 class="display-4 mb-4">
+          <i class="fas fa-headset text-primary me-3"></i>Helpdesk System
+        </h1>
+        <p class="lead">A comprehensive helpdesk solution for managing IT support tickets and equipment</p>
+        
+        <% if (!user) { %>
+          <div class="mt-5">
+            <a href="/auth/login" class="btn btn-primary btn-lg px-4">
+              <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+          </div>
+        <% } else { %>
+          <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+              <div class="card h-100 border-primary">
+                <div class="card-body text-center">
+                  <i class="fas fa-ticket-alt fa-3x text-primary mb-3"></i>
+                  <h3>Tickets</h3>
+                  <p>View and manage support tickets</p>
+                  <a href="/tickets" class="btn btn-outline-primary mt-2">Go to Tickets</a>
+                </div>
+              </div>
+            </div>
+            
+            <% if (user.role === 'helpdesk' || user.role === 'manager') { %>
+              <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                  <div class="card-body text-center">
+                    <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
+                    <h3>Create Ticket</h3>
+                    <p>Create a new support ticket</p>
+                    <a href="/tickets/create" class="btn btn-outline-success mt-2">Create Ticket</a>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+            
+            <% if (user.role === 'technician' || user.role === 'manager') { %>
+              <div class="col-md-4 mb-4">
+                <div class="card h-100 border-info">
+                  <div class="card-body text-center">
+                    <i class="fas fa-desktop fa-3x text-info mb-3"></i>
+                    <h3>Equipment</h3>
+                    <p>Manage IT equipment inventory</p>
+                    <a href="/equipment" class="btn btn-outline-info mt-2">View Equipment</a>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+            
+            <% if (user.role === 'manager') { %>
+              <div class="col-md-4 mb-4">
+                <div class="card h-100 border-warning">
+                  <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
+                    <h3>Users</h3>
+                    <p>Manage system users</p>
+                    <a href="/users" class="btn btn-outline-warning mt-2">Manage Users</a>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-4 mb-4">
+                <div class="card h-100 border-danger">
+                  <div class="card-body text-center">
+                    <i class="fas fa-building fa-3x text-danger mb-3"></i>
+                    <h3>Offices</h3>
+                    <p>Manage office locations</p>
+                    <a href="/offices" class="btn btn-outline-danger mt-2">Manage Offices</a>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div> 

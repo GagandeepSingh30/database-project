@@ -1,0 +1,151 @@
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm bg-primary text-white fade-in">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="fas fa-headset fa-3x"></i>
+          </div>
+          <div>
+            <h2 class="card-title mb-0">Welcome, <%= user.firstName %> <%= user.lastName %></h2>
+            <p class="lead mb-0">Helpdesk Operator Dashboard</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-4 mb-4 mb-md-0">
+    <div class="card shadow-sm h-100 border-primary dashboard-card">
+      <div class="card-body text-center">
+        <h1 class="display-4 text-primary mb-0 dashboard-stat"><%= data.openTicketsCount %></h1>
+        <p class="text-muted">Open Tickets</p>
+        <div class="d-grid">
+          <a href="/tickets?status=open" class="btn btn-outline-primary">View Open Tickets</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4 mb-4 mb-md-0">
+    <div class="card shadow-sm h-100 border-warning dashboard-card">
+      <div class="card-body text-center">
+        <h1 class="display-4 text-warning mb-0 dashboard-stat"><%= data.pendingTicketsCount %></h1>
+        <p class="text-muted">Pending Tickets</p>
+        <div class="d-grid">
+          <a href="/tickets?status=pending" class="btn btn-outline-warning">View Pending Tickets</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100 border-success dashboard-card">
+      <div class="card-body text-center">
+        <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
+        <h5>Create New Ticket</h5>
+        <p class="text-muted">Create a new support ticket</p>
+        <div class="d-grid">
+          <a href="/tickets/create" class="btn btn-success">Create Ticket</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8 mb-4">
+    <div class="card shadow-sm h-100 dashboard-card">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Recent Tickets</h5>
+      </div>
+      <div class="card-body p-0">
+        <% if (data.recentTickets && data.recentTickets.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Created By</th>
+                  <th>Assigned To</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% data.recentTickets.forEach(ticket => { %>
+                  <tr>
+                    <td><a href="/tickets/<%= ticket.id %>">#<%= ticket.id %></a></td>
+                    <td><%= ticket.title %></td>
+                    <td>
+                      <% if (ticket.status === 'Open') { %>
+                        <span class="badge bg-primary"><%= ticket.status %></span>
+                      <% } else if (ticket.status === 'Pending') { %>
+                        <span class="badge bg-warning text-dark"><%= ticket.status %></span>
+                      <% } else if (ticket.status === 'In Progress') { %>
+                        <span class="badge bg-info"><%= ticket.status %></span>
+                      <% } else if (ticket.status === 'Resolved') { %>
+                        <span class="badge bg-success"><%= ticket.status %></span>
+                      <% } else if (ticket.status === 'Closed') { %>
+                        <span class="badge bg-secondary"><%= ticket.status %></span>
+                      <% } %>
+                    </td>
+                    <td><%= ticket.creator ? ticket.creator.firstName + ' ' + ticket.creator.lastName : 'N/A' %></td>
+                    <td><%= ticket.assignee ? ticket.assignee.firstName + ' ' + ticket.assignee.lastName : 'Unassigned' %></td>
+                    <td><%= new Date(ticket.createdAt).toLocaleDateString() %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <div class="text-center p-4">
+            <p class="text-muted mb-0">No recent tickets found</p>
+          </div>
+        <% } %>
+      </div>
+      <div class="card-footer text-end">
+        <a href="/tickets" class="btn btn-sm btn-outline-primary">View All Tickets</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4 mb-4">
+    <div class="card shadow-sm h-100 dashboard-card">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-user-cog me-2"></i>Quick Actions</h5>
+      </div>
+      <div class="card-body">
+        <div class="list-group">
+          <a href="/tickets/create" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-plus-circle me-2"></i>Create Ticket
+            </div>
+            <i class="fas fa-chevron-right"></i>
+          </a>
+          <a href="/tickets?status=open" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-exclamation-circle me-2"></i>Open Tickets
+            </div>
+            <i class="fas fa-chevron-right"></i>
+          </a>
+          <a href="/tickets?status=pending" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-clock me-2"></i>Pending Tickets
+            </div>
+            <i class="fas fa-chevron-right"></i>
+          </a>
+          <a href="/auth/profile" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-user me-2"></i>My Profile
+            </div>
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

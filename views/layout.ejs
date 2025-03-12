@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | Helpdesk System</title>
+  <!-- Bootstrap 5 CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <i class="fas fa-headset me-2"></i>Helpdesk System
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <% if (user) { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/tickets">Tickets</a>
+            </li>
+            <% if (user.role === 'helpdesk' || user.role === 'manager') { %>
+              <li class="nav-item">
+                <a class="nav-link" href="/tickets/create">Create Ticket</a>
+              </li>
+            <% } %>
+            <% if (user.role === 'technician' || user.role === 'manager') { %>
+              <li class="nav-item">
+                <a class="nav-link" href="/equipment">Equipment</a>
+              </li>
+            <% } %>
+            <% if (user.role === 'manager') { %>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                  Admin
+                </a>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="/users">Users</a></li>
+                  <li><a class="dropdown-item" href="/offices">Offices</a></li>
+                  <li><a class="dropdown-item" href="/auth/register">Register User</a></li>
+                  <li><a class="dropdown-item" href="/equipment/create">Add Equipment</a></li>
+                </ul>
+              </li>
+            <% } %>
+          <% } %>
+        </ul>
+        <ul class="navbar-nav">
+          <% if (user) { %>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                <i class="fas fa-user me-1"></i><%= user.firstName %> <%= user.lastName %> 
+                <span class="badge bg-light text-primary ms-1"><%= user.role %></span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/auth/profile">My Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
+              </ul>
+            </li>
+          <% } else { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/login">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/register">Register</a>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container py-4">
+    <!-- Flash Messages -->
+    <%- include('partials/messages') %>
+    
+    <!-- Page Content -->
+    <%- body %>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-light py-3 mt-auto">
+    <div class="container text-center">
+      <p class="mb-0">&copy; <%= new Date().getFullYear() %> Helpdesk System. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- jQuery -->
+  <script src="/js/jquery.min.js"></script>
+  <!-- Bootstrap 5 JS Bundle with Popper -->
+  <script src="/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>
+</body>
+</html> 

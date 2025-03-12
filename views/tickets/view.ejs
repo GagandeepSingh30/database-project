@@ -1,0 +1,266 @@
+<div class="row">
+  <div class="col-md-8">
+    <!-- Ticket Details -->
+    <div class="card shadow-sm mb-4 ticket-priority-<%= ticket.priority %>">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">
+          <i class="fas fa-ticket-alt me-2"></i>Ticket #<%= ticket.id %>
+        </h4>
+        <span class="ticket-status ticket-status-<%= ticket.status %>">
+          <%= ticket.status.replace('_', ' ') %>
+        </span>
+      </div>
+      <div class="card-body">
+        <h5 class="card-title mb-3"><%= ticket.title %></h5>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Priority:</strong> 
+              <span class="badge bg-<%= 
+                ticket.priority === 'low' ? 'success' : 
+                ticket.priority === 'medium' ? 'warning' : 
+                ticket.priority === 'high' ? 'orange' : 'danger' 
+              %>">
+                <%= ticket.priority %>
+              </span>
+            </p>
+            <p class="mb-1"><strong>Created By:</strong> 
+              <%= ticket.creator ? `${ticket.creator.firstName} ${ticket.creator.lastName}` : 'Unknown' %>
+            </p>
+            <p class="mb-1"><strong>Created At:</strong> 
+              <%= new Date(ticket.createdAt).toLocaleString() %>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Assigned To:</strong> 
+              <%= ticket.assignee ? `${ticket.assignee.firstName} ${ticket.assignee.lastName}` : 'Unassigned' %>
+            </p>
+            <% if (ticket.Equipment) { %>
+              <p class="mb-1"><strong>Equipment:</strong> 
+                <%= ticket.Equipment.name %> (<%= ticket.Equipment.type %>)
+              </p>
+              <p class="mb-1"><strong>Location:</strong> 
+                <%= ticket.Equipment.Office ? ticket.Equipment.Office.name : 'Unknown' %>
+              </p>
+            <% } %>
+          </div>
+        </div>
+        
+        <div class="card mb-3">
+          <div class="card-header bg-light">
+            <strong>Description</strong>
+          </div>
+          <div class="card-body">
+            <p class="card-text"><%= ticket.description %></p>
+          </div>
+        </div>
+        
+        <% if (ticket.status === 'resolved' && ticket.resolutionNotes) { %>
+          <div class="card mb-3 border-success">
+            <div class="card-header bg-success text-white">
+              <strong>Resolution Notes</strong>
+            </div>
+            <div class="card-body">
+              <p class="card-text"><%= ticket.resolutionNotes %></p>
+              <p class="text-muted mb-0">
+                <small>Resolved on <%= new Date(ticket.resolvedAt).toLocaleString() %></small>
+              </p>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    
+    <!-- Comments -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Comments</h5>
+      </div>
+      <div class="card-body">
+        <% if (ticket.Comments && ticket.Comments.length > 0) { %>
+          <% ticket.Comments.forEach(function(comment) { %>
+            <% if (!comment.isInternal || (user && (user.role === 'technician' || user.role === 'manager'))) { %>
+              <div class="comment <%= comment.isInternal ? 'comment-internal' : '' %>">
+                <div class="comment-header">
+                  <span class="comment-user">
+                    <%= comment.User.firstName %> <%= comment.User.lastName %>
+                    <span class="badge bg-secondary"><%= comment.User.role %></span>
+                    <% if (comment.isInternal) { %>
+                      <span class="badge bg-warning text-dark">Internal</span>
+                    <% } %>
+                  </span>
+                  <span class="comment-time">
+                    <%= new Date(comment.createdAt).toLocaleString() %>
+                  </span>
+                </div>
+                <div class="comment-content">
+                  <%= comment.content %>
+                </div>
+              </div>
+            <% } %>
+          <% }); %>
+        <% } else { %>
+          <p class="text-muted">No comments yet.</p>
+        <% } %>
+        
+        <!-- Add Comment Form -->
+        <form action="/tickets/<%= ticket.id %>/comments" method="POST" class="mt-4">
+          <div class="mb-3">
+            <label for="content" class="form-label">Add a Comment</label>
+            <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+          </div>
+          
+          <% if (user && (user.role === 'technician' || user.role === 'manager')) { %>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="comment-type-toggle" name="isInternal">
+              <label class="form-check-label" for="comment-type-toggle">
+                Internal Comment (only visible to staff)
+              </label>
+              <div id="internal-comment-info" class="form-text" style="display: none;">
+                This comment will only be visible to technicians and managers.
+              </div>
+            </div>
+          <% } %>
+          
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane me-2"></i>Add Comment
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <!-- Actions Panel -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Actions</h5>
+      </div>
+      <div class="card-body">
+        <!-- Assign Ticket (for helpdesk and managers) -->
+        <% if ((user.role === 'helpdesk' || user.role === 'manager') && ticket.status !== 'closed') { %>
+          <form action="/tickets/<%= ticket.id %>/assign" method="POST" class="mb-3">
+            <div class="mb-3">
+              <label for="assignedTo" class="form-label">Assign to Technician</label>
+              <select class="form-select" id="assignedTo" name="assignedTo" required>
+                <option value="">-- Select Technician --</option>
+                <% technicians.forEach(function(tech) { %>
+                  <option value="<%= tech.id %>" <%= ticket.assignedTo === tech.id ? 'selected' : '' %>>
+                    <%= tech.firstName %> <%= tech.lastName %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm w-100">
+              <i class="fas fa-user-plus me-2"></i>Assign Ticket
+            </button>
+          </form>
+          <hr>
+        <% } %>
+        
+        <!-- Update Status -->
+        <% if (ticket.status !== 'closed') { %>
+          <form action="/tickets/<%= ticket.id %>/status" method="POST">
+            <div class="mb-3">
+              <label for="status" class="form-label">Update Status</label>
+              <select class="form-select" id="status" name="status" required>
+                <option value="">-- Select Status --</option>
+                
+                <% if (user.role === 'technician' || user.role === 'manager') { %>
+                  <% if (ticket.assignedTo === user.id || user.role === 'manager') { %>
+                    <option value="in_progress" <%= ticket.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
+                    <option value="on_hold" <%= ticket.status === 'on_hold' ? 'selected' : '' %>>On Hold</option>
+                    <option value="resolved" <%= ticket.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
+                  <% } %>
+                <% } %>
+                
+                <% if (user.role === 'helpdesk' || user.role === 'manager') { %>
+                  <option value="closed" <%= ticket.status === 'closed' ? 'selected' : '' %>>Closed</option>
+                <% } %>
+              </select>
+            </div>
+            
+            <% if (user.role === 'technician' || user.role === 'manager') { %>
+              <div class="mb-3" id="resolution-notes-container" style="display: none;">
+                <label for="resolutionNotes" class="form-label">Resolution Notes</label>
+                <textarea class="form-control" id="resolutionNotes" name="resolutionNotes" rows="3"></textarea>
+                <div class="form-text">Please provide details on how the issue was resolved.</div>
+              </div>
+              
+              <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                  const statusSelect = document.getElementById('status');
+                  const resolutionContainer = document.getElementById('resolution-notes-container');
+                  
+                  statusSelect.addEventListener('change', function() {
+                    if (this.value === 'resolved') {
+                      resolutionContainer.style.display = 'block';
+                    } else {
+                      resolutionContainer.style.display = 'none';
+                    }
+                  });
+                  
+                  // Check initial value
+                  if (statusSelect.value === 'resolved') {
+                    resolutionContainer.style.display = 'block';
+                  }
+                });
+              </script>
+            <% } %>
+            
+            <button type="submit" class="btn btn-primary btn-sm w-100">
+              <i class="fas fa-sync-alt me-2"></i>Update Status
+            </button>
+          </form>
+        <% } else { %>
+          <div class="alert alert-secondary">
+            <i class="fas fa-info-circle me-2"></i>This ticket is closed.
+          </div>
+        <% } %>
+        
+        <hr>
+        
+        <!-- Back to Tickets -->
+        <a href="/tickets" class="btn btn-secondary btn-sm w-100">
+          <i class="fas fa-arrow-left me-2"></i>Back to All Tickets
+        </a>
+      </div>
+    </div>
+    
+    <!-- Equipment Info (if applicable) -->
+    <% if (ticket.Equipment) { %>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0"><i class="fas fa-desktop me-2"></i>Equipment Details</h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-2"><strong>Name:</strong> <%= ticket.Equipment.name %></p>
+          <p class="mb-2">
+            <strong>Type:</strong> 
+            <span class="equipment-type equipment-type-<%= ticket.Equipment.type %>">
+              <%= ticket.Equipment.type %>
+            </span>
+          </p>
+          <p class="mb-2"><strong>Serial Number:</strong> <%= ticket.Equipment.serialNumber || 'N/A' %></p>
+          <p class="mb-2"><strong>Model:</strong> <%= ticket.Equipment.model || 'N/A' %></p>
+          <p class="mb-2"><strong>Status:</strong> <%= ticket.Equipment.status %></p>
+          
+          <% if (ticket.Equipment.warrantyExpiration) { %>
+            <p class="mb-2">
+              <strong>Warranty:</strong> 
+              <span class="warranty-date" data-date="<%= ticket.Equipment.warrantyExpiration %>">
+                <%= new Date(ticket.Equipment.warrantyExpiration).toLocaleDateString() %>
+              </span>
+            </p>
+          <% } %>
+          
+          <% if (user.role === 'technician' || user.role === 'manager') { %>
+            <a href="/equipment/<%= ticket.Equipment.id %>" class="btn btn-info btn-sm w-100 mt-2">
+              <i class="fas fa-info-circle me-2"></i>View Equipment Details
+            </a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div> 

@@ -1,0 +1,124 @@
+<div class="row justify-content-center mt-5">
+  <div class="col-md-8 col-lg-7">
+    <div class="card shadow-lg border-0 rounded-lg auth-card fade-in">
+      <div class="card-header bg-primary text-white text-center py-4">
+        <h3 class="mb-0"><i class="fas fa-user-plus me-2"></i>Register Account</h3>
+      </div>
+      <div class="card-body p-5">
+        <div class="text-center mb-4">
+          <p class="lead text-muted">Create a new account</p>
+        </div>
+        <form action="/auth/register" method="POST">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="form-floating mb-3 mb-md-0">
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  class="form-control"
+                  placeholder="First Name"
+                  value="<%= typeof firstName != 'undefined' ? firstName : '' %>"
+                  required
+                />
+                <label for="firstName">First Name</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  class="form-control"
+                  placeholder="Last Name"
+                  value="<%= typeof lastName != 'undefined' ? lastName : '' %>"
+                  required
+                />
+                <label for="lastName">Last Name</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-floating mb-3">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-control"
+              placeholder="name@example.com"
+              value="<%= typeof email != 'undefined' ? email : '' %>"
+              required
+            />
+            <label for="email">Email Address</label>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="form-floating mb-3 mb-md-0">
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  class="form-control"
+                  placeholder="Create a password"
+                  required
+                />
+                <label for="password">Password</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  class="form-control"
+                  placeholder="Confirm password"
+                  required
+                />
+                <label for="confirmPassword">Confirm Password</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-floating mb-3">
+            <select class="form-select" id="role" name="role" required>
+              <option value="" selected disabled>Select a role</option>
+              <option value="helpdesk" <%= typeof role != 'undefined' && role === 'helpdesk' ? 'selected' : '' %>>Helpdesk Operator</option>
+              <option value="technician" <%= typeof role != 'undefined' && role === 'technician' ? 'selected' : '' %>>IT Technician</option>
+              <option value="manager" <%= typeof role != 'undefined' && role === 'manager' ? 'selected' : '' %>>Manager</option>
+            </select>
+            <label for="role">Role</label>
+          </div>
+          
+          <div class="form-floating mb-4">
+            <select class="form-select" id="officeId" name="officeId">
+              <option value="">Select an office (optional)</option>
+              <% if (offices && offices.length > 0) { %>
+                <% offices.forEach(office => { %>
+                  <option value="<%= office.id %>" <%= typeof officeId != 'undefined' && officeId == office.id ? 'selected' : '' %>><%= office.name %></option>
+                <% }); %>
+              <% } %>
+            </select>
+            <label for="officeId">Office Location</label>
+          </div>
+          
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-user-plus me-2"></i>Register
+            </button>
+          </div>
+          <div class="text-center mt-4">
+            <a href="/auth/login" class="text-decoration-none">Already have an account? Login here</a>
+          </div>
+        </form>
+      </div>
+      <div class="card-footer text-center py-3 bg-light">
+        <p class="text-muted mb-0">
+          <i class="fas fa-shield-alt me-1"></i>All information is encrypted and secure
+        </p>
+      </div>
+    </div>
+  </div>
+</div> 
