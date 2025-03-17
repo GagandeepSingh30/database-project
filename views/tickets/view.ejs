@@ -1,3 +1,5 @@
+<%- include('../partials/header.ejs') %>
+
 <div class="row">
   <div class="col-md-8">
     <!-- Ticket Details -->
@@ -103,29 +105,31 @@
           <p class="text-muted">No comments yet.</p>
         <% } %>
         
-        <!-- Add Comment Form -->
-        <form action="/tickets/<%= ticket.id %>/comments" method="POST" class="mt-4">
-          <div class="mb-3">
-            <label for="content" class="form-label">Add a Comment</label>
-            <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
-          </div>
-          
-          <% if (user && (user.role === 'technician' || user.role === 'manager')) { %>
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="checkbox" id="comment-type-toggle" name="isInternal">
-              <label class="form-check-label" for="comment-type-toggle">
-                Internal Comment (only visible to staff)
-              </label>
-              <div id="internal-comment-info" class="form-text" style="display: none;">
-                This comment will only be visible to technicians and managers.
-              </div>
+        <!-- Add Comment Form - Only for helpdesk and technicians, not managers -->
+        <% if (user.role !== 'manager') { %>
+          <form action="/tickets/<%= ticket.id %>/comments" method="POST" class="mt-4">
+            <div class="mb-3">
+              <label for="content" class="form-label">Add a Comment</label>
+              <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
             </div>
-          <% } %>
-          
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-paper-plane me-2"></i>Add Comment
-          </button>
-        </form>
+            
+            <% if (user && user.role === 'technician') { %>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="comment-type-toggle" name="isInternal">
+                <label class="form-check-label" for="comment-type-toggle">
+                  Internal Comment (only visible to staff)
+                </label>
+                <div id="internal-comment-info" class="form-text" style="display: none;">
+                  This comment will only be visible to technicians and managers.
+                </div>
+              </div>
+            <% } %>
+            
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane me-2"></i>Add Comment
+            </button>
+          </form>
+        <% } %>
       </div>
     </div>
   </div>
@@ -137,8 +141,8 @@
         <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Actions</h5>
       </div>
       <div class="card-body">
-        <!-- Assign Ticket (for helpdesk and managers) -->
-        <% if ((user.role === 'helpdesk' || user.role === 'manager') && ticket.status !== 'closed') { %>
+        <!-- Assign Ticket (for helpdesk only) -->
+        <% if (user.role === 'helpdesk' && ticket.status !== 'closed') { %>
           <form action="/tickets/<%= ticket.id %>/assign" method="POST" class="mb-3">
             <div class="mb-3">
               <label for="assignedTo" class="form-label">Assign to Technician</label>
@@ -158,63 +162,32 @@
           <hr>
         <% } %>
         
-        <!-- Update Status -->
-        <% if (ticket.status !== 'closed') { %>
+        <!-- Update Status - Only for technicians -->
+        <% if (user.role === 'technician' && ticket.status !== 'closed' && ticket.assignedTo === user.id) { %>
           <form action="/tickets/<%= ticket.id %>/status" method="POST">
             <div class="mb-3">
               <label for="status" class="form-label">Update Status</label>
               <select class="form-select" id="status" name="status" required>
                 <option value="">-- Select Status --</option>
-                
-                <% if (user.role === 'technician' || user.role === 'manager') { %>
-                  <% if (ticket.assignedTo === user.id || user.role === 'manager') { %>
-                    <option value="in_progress" <%= ticket.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
-                    <option value="on_hold" <%= ticket.status === 'on_hold' ? 'selected' : '' %>>On Hold</option>
-                    <option value="resolved" <%= ticket.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
-                  <% } %>
-                <% } %>
-                
-                <% if (user.role === 'helpdesk' || user.role === 'manager') { %>
-                  <option value="closed" <%= ticket.status === 'closed' ? 'selected' : '' %>>Closed</option>
-                <% } %>
+                <option value="in_progress" <%= ticket.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
+                <option value="on_hold" <%= ticket.status === 'on_hold' ? 'selected' : '' %>>On Hold</option>
+                <option value="resolved" <%= ticket.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
               </select>
             </div>
             
-            <% if (user.role === 'technician' || user.role === 'manager') { %>
-              <div class="mb-3" id="resolution-notes-container" style="display: none;">
-                <label for="resolutionNotes" class="form-label">Resolution Notes</label>
-                <textarea class="form-control" id="resolutionNotes" name="resolutionNotes" rows="3"></textarea>
-                <div class="form-text">Please provide details on how the issue was resolved.</div>
-              </div>
-              
-              <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                  const statusSelect = document.getElementById('status');
-                  const resolutionContainer = document.getElementById('resolution-notes-container');
-                  
-                  statusSelect.addEventListener('change', function() {
-                    if (this.value === 'resolved') {
-                      resolutionContainer.style.display = 'block';
-                    } else {
-                      resolutionContainer.style.display = 'none';
-                    }
-                  });
-                  
-                  // Check initial value
-                  if (statusSelect.value === 'resolved') {
-                    resolutionContainer.style.display = 'block';
-                  }
-                });
-              </script>
-            <% } %>
+            <div class="mb-3">
+              <label for="resolutionNotes" class="form-label">Description</label>
+              <textarea class="form-control" id="resolutionNotes" name="resolutionNotes" rows="3" required></textarea>
+              <div class="form-text">Please provide details about this status update.</div>
+            </div>
             
             <button type="submit" class="btn btn-primary btn-sm w-100">
               <i class="fas fa-sync-alt me-2"></i>Update Status
             </button>
           </form>
-        <% } else { %>
-          <div class="alert alert-secondary">
-            <i class="fas fa-info-circle me-2"></i>This ticket is closed.
+        <% } else if (user.role === 'manager') { %>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>As a manager, you can only view tickets.
           </div>
         <% } %>
         
@@ -254,7 +227,7 @@
             </p>
           <% } %>
           
-          <% if (user.role === 'technician' || user.role === 'manager') { %>
+          <% if (user.role === 'technician') { %>
             <a href="/equipment/<%= ticket.Equipment.id %>" class="btn btn-info btn-sm w-100 mt-2">
               <i class="fas fa-info-circle me-2"></i>View Equipment Details
             </a>

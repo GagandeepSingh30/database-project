@@ -1,3 +1,13 @@
+<%- include('../partials/header.ejs') %>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle me-2"></i><%= data.roleMessage %>
+    </div>
+  </div>
+</div>
+
 <div class="row mb-4">
   <div class="col-12">
     <div class="card shadow-sm bg-warning text-dark fade-in">
@@ -16,300 +26,311 @@
   </div>
 </div>
 
+<!-- Report Selection -->
 <div class="row mb-4">
-  <div class="col-md-3 mb-4 mb-md-0">
-    <div class="card shadow-sm h-100 border-primary dashboard-card">
-      <div class="card-body text-center">
-        <h1 class="display-4 text-primary mb-0 dashboard-stat"><%= data.openTicketsCount %></h1>
-        <p class="text-muted">Open Tickets</p>
-        <div class="d-grid">
-          <a href="/tickets?status=open" class="btn btn-outline-primary">View Open Tickets</a>
-        </div>
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Reports</h5>
       </div>
-    </div>
-  </div>
-  
-  <div class="col-md-3 mb-4 mb-md-0">
-    <div class="card shadow-sm h-100 border-success dashboard-card">
-      <div class="card-body text-center">
-        <h1 class="display-4 text-success mb-0 dashboard-stat">
-          <% 
-            let helpdesks = 0;
-            if (data.usersByRole) {
-              const helpdeskData = data.usersByRole.find(u => u.role === 'helpdesk');
-              if (helpdeskData) helpdesks = helpdeskData.count;
-            }
-          %>
-          <%= helpdesks %>
-        </h1>
-        <p class="text-muted">Helpdesk Operators</p>
-        <div class="d-grid">
-          <a href="/users?role=helpdesk" class="btn btn-outline-success">View Operators</a>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="col-md-3 mb-4 mb-md-0">
-    <div class="card shadow-sm h-100 border-info dashboard-card">
-      <div class="card-body text-center">
-        <h1 class="display-4 text-info mb-0 dashboard-stat">
-          <% 
-            let technicians = 0;
-            if (data.usersByRole) {
-              const techData = data.usersByRole.find(u => u.role === 'technician');
-              if (techData) technicians = techData.count;
-            }
-          %>
-          <%= technicians %>
-        </h1>
-        <p class="text-muted">IT Technicians</p>
-        <div class="d-grid">
-          <a href="/users?role=technician" class="btn btn-outline-info">View Technicians</a>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="col-md-3">
-    <div class="card shadow-sm h-100 border-warning dashboard-card">
-      <div class="card-body text-center">
-        <h1 class="display-4 text-warning mb-0 dashboard-stat">
-          <% 
-            let managers = 0;
-            if (data.usersByRole) {
-              const managerData = data.usersByRole.find(u => u.role === 'manager');
-              if (managerData) managers = managerData.count;
-            }
-          %>
-          <%= managers %>
-        </h1>
-        <p class="text-muted">Managers</p>
-        <div class="d-grid">
-          <a href="/users?role=manager" class="btn btn-outline-warning">View Managers</a>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-calendar-alt me-2"></i>Monthly Ticket Summary</h5>
+                <p class="card-text">View a summary of all tickets logged in a given month, showing open and closed cases and time spent.</p>
+                <form action="/dashboard/reports/monthly-summary" method="GET" class="row g-3">
+                  <div class="col-md-6">
+                    <label for="month" class="form-label">Month</label>
+                    <select class="form-select" id="month" name="month" required>
+                      <% for(let i = 1; i <= 12; i++) { %>
+                        <option value="<%= i %>" <%= i === data.currentMonth ? 'selected' : '' %>><%= new Date(0, i-1).toLocaleString('default', { month: 'long' }) %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="year" class="form-label">Year</label>
+                    <select class="form-select" id="year" name="year" required>
+                      <% for(let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) { %>
+                        <option value="<%= i %>" <%= i === data.currentYear ? 'selected' : '' %>><%= i %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-user-cog me-2"></i>Technician Job Summary</h5>
+                <p class="card-text">View a summary of all technicians' job sheets in a given month, showing jobs worked and time spent.</p>
+                <form action="/dashboard/reports/technician-summary" method="GET" class="row g-3">
+                  <div class="col-md-6">
+                    <label for="tech-month" class="form-label">Month</label>
+                    <select class="form-select" id="tech-month" name="month" required>
+                      <% for(let i = 1; i <= 12; i++) { %>
+                        <option value="<%= i %>" <%= i === data.currentMonth ? 'selected' : '' %>><%= new Date(0, i-1).toLocaleString('default', { month: 'long' }) %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="tech-year" class="form-label">Year</label>
+                    <select class="form-select" id="tech-year" name="year" required>
+                      <% for(let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) { %>
+                        <option value="<%= i %>" <%= i === data.currentYear ? 'selected' : '' %>><%= i %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-info w-100">Generate Report</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-building me-2"></i>Office Jobs Summary</h5>
+                <p class="card-text">View a summary of total jobs logged by each office, showing hardware/software faults and time spent.</p>
+                <div class="d-grid gap-2">
+                  <a href="/dashboard/reports/office-summary" class="btn btn-success">Generate Report</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-desktop me-2"></i>Equipment Jobs Summary</h5>
+                <p class="card-text">View a summary of total jobs assigned to each equipment item, identifying items that need replacing.</p>
+                <div class="d-grid gap-2">
+                  <a href="/dashboard/reports/equipment-summary" class="btn btn-secondary">Generate Report</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-user-md me-2"></i>Technician Detailed Report</h5>
+                <p class="card-text">View detailed information on jobs worked by a selected technician each month.</p>
+                <form action="/dashboard/reports/technician-detail" method="GET" class="row g-3">
+                  <div class="col-md-12 mb-2">
+                    <label for="technicianId" class="form-label">Technician</label>
+                    <select class="form-select" id="technicianId" name="technicianId" required>
+                      <option value="">-- Select Technician --</option>
+                      <% if (data.technicians && data.technicians.length > 0) { %>
+                        <% data.technicians.forEach(tech => { %>
+                          <option value="<%= tech.id %>"><%= tech.firstName %> <%= tech.lastName %></option>
+                        <% }); %>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="tech-detail-month" class="form-label">Month</label>
+                    <select class="form-select" id="tech-detail-month" name="month" required>
+                      <% for(let i = 1; i <= 12; i++) { %>
+                        <option value="<%= i %>" <%= i === data.currentMonth ? 'selected' : '' %>><%= new Date(0, i-1).toLocaleString('default', { month: 'long' }) %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="tech-detail-year" class="form-label">Year</label>
+                    <select class="form-select" id="tech-detail-year" name="year" required>
+                      <% for(let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) { %>
+                        <option value="<%= i %>" <%= i === data.currentYear ? 'selected' : '' %>><%= i %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-building me-2"></i>Office Detailed Report</h5>
+                <p class="card-text">View detailed information on jobs logged by a selected office each month.</p>
+                <form action="/dashboard/reports/office-detail" method="GET" class="row g-3">
+                  <div class="col-md-12 mb-2">
+                    <label for="officeId" class="form-label">Office</label>
+                    <select class="form-select" id="officeId" name="officeId" required>
+                      <option value="">-- Select Office --</option>
+                      <% if (data.offices && data.offices.length > 0) { %>
+                        <% data.offices.forEach(office => { %>
+                          <option value="<%= office.id %>"><%= office.name %></option>
+                        <% }); %>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="office-detail-month" class="form-label">Month</label>
+                    <select class="form-select" id="office-detail-month" name="month" required>
+                      <% for(let i = 1; i <= 12; i++) { %>
+                        <option value="<%= i %>" <%= i === data.currentMonth ? 'selected' : '' %>><%= new Date(0, i-1).toLocaleString('default', { month: 'long' }) %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="office-detail-year" class="form-label">Year</label>
+                    <select class="form-select" id="office-detail-year" name="year" required>
+                      <% for(let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) { %>
+                        <option value="<%= i %>" <%= i === data.currentYear ? 'selected' : '' %>><%= i %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-success w-100">Generate Report</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="row">
-  <div class="col-md-8 mb-4">
-    <div class="card shadow-sm h-100 dashboard-card">
-      <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Recent Tickets</h5>
+<!-- Monthly Ticket Summary Preview -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Current Month Ticket Summary</h5>
       </div>
-      <div class="card-body p-0">
-        <% if (data.recentTickets && data.recentTickets.length > 0) { %>
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
+      <div class="card-body">
+        <% if (data.monthlyTicketSummary) { %>
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h2 class="text-primary mb-0"><%= data.monthlyTicketSummary.totalTickets %></h2>
+                  <p class="text-muted mb-0">Total Tickets</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h2 class="text-warning mb-0"><%= data.monthlyTicketSummary.openCases %></h2>
+                  <p class="text-muted mb-0">Open Cases</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h2 class="text-success mb-0"><%= data.monthlyTicketSummary.closedCases %></h2>
+                  <p class="text-muted mb-0">Closed Cases</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h2 class="text-info mb-0"><%= data.monthlyTicketSummary.totalTimeSpent %> hrs</h2>
+                  <p class="text-muted mb-0">Total Time Spent</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="table-responsive mt-3">
+            <table class="table table-hover">
               <thead class="table-light">
                 <tr>
                   <th>ID</th>
                   <th>Title</th>
                   <th>Status</th>
-                  <th>Priority</th>
-                  <th>Created By</th>
                   <th>Assigned To</th>
-                  <th>Date</th>
+                  <th>Created</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <% data.recentTickets.forEach(ticket => { %>
+                <% data.monthlyTicketSummary.tickets.slice(0, 5).forEach(ticket => { %>
                   <tr>
-                    <td><a href="/tickets/<%= ticket.id %>">#<%= ticket.id %></a></td>
+                    <td>#<%= ticket.id %></td>
                     <td><%= ticket.title %></td>
                     <td>
-                      <% if (ticket.status === 'Open') { %>
-                        <span class="badge bg-primary"><%= ticket.status %></span>
-                      <% } else if (ticket.status === 'Pending') { %>
-                        <span class="badge bg-warning text-dark"><%= ticket.status %></span>
-                      <% } else if (ticket.status === 'In Progress') { %>
-                        <span class="badge bg-info"><%= ticket.status %></span>
-                      <% } else if (ticket.status === 'Resolved') { %>
-                        <span class="badge bg-success"><%= ticket.status %></span>
-                      <% } else if (ticket.status === 'Closed') { %>
-                        <span class="badge bg-secondary"><%= ticket.status %></span>
-                      <% } %>
+                      <span class="badge bg-<%= 
+                        ticket.status === 'open' ? 'primary' : 
+                        ticket.status === 'assigned' ? 'info' :
+                        ticket.status === 'in_progress' ? 'warning' :
+                        ticket.status === 'on_hold' ? 'secondary' :
+                        ticket.status === 'resolved' ? 'success' : 'dark'
+                      %>">
+                        <%= ticket.status.replace('_', ' ') %>
+                      </span>
                     </td>
                     <td>
-                      <% if (ticket.priority === 'High') { %>
-                        <span class="badge bg-danger"><%= ticket.priority %></span>
-                      <% } else if (ticket.priority === 'Medium') { %>
-                        <span class="badge bg-warning text-dark"><%= ticket.priority %></span>
-                      <% } else { %>
-                        <span class="badge bg-success"><%= ticket.priority %></span>
-                      <% } %>
+                      <%= ticket.assignee ? `${ticket.assignee.firstName} ${ticket.assignee.lastName}` : 'Unassigned' %>
                     </td>
-                    <td><%= ticket.creator ? ticket.creator.firstName + ' ' + ticket.creator.lastName : 'N/A' %></td>
-                    <td><%= ticket.assignee ? ticket.assignee.firstName + ' ' + ticket.assignee.lastName : 'Unassigned' %></td>
                     <td><%= new Date(ticket.createdAt).toLocaleDateString() %></td>
+                    <td>
+                      <a href="/tickets/<%= ticket.id %>" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                    </td>
                   </tr>
                 <% }); %>
               </tbody>
             </table>
           </div>
-        <% } else { %>
-          <div class="text-center p-4">
-            <p class="text-muted mb-0">No recent tickets found</p>
-          </div>
-        <% } %>
-      </div>
-      <div class="card-footer text-end">
-        <a href="/tickets" class="btn btn-sm btn-outline-warning">View All Tickets</a>
-      </div>
-    </div>
-  </div>
-  
-  <div class="col-md-4 mb-4">
-    <div class="card shadow-sm h-100 dashboard-card">
-      <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Ticket Status</h5>
-      </div>
-      <div class="card-body">
-        <% if (data.ticketsByStatus && data.ticketsByStatus.length > 0) { %>
-          <div class="list-group">
-            <% 
-              const statusOrder = ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed'];
-              const statusColors = {
-                'Open': 'primary',
-                'In Progress': 'info',
-                'Pending': 'warning',
-                'Resolved': 'success',
-                'Closed': 'secondary'
-              };
-              const statusIcons = {
-                'Open': 'exclamation-circle',
-                'In Progress': 'spinner',
-                'Pending': 'clock',
-                'Resolved': 'check-circle',
-                'Closed': 'times-circle'
-              };
-              
-              // Sort by predefined order
-              const sortedStatuses = [...data.ticketsByStatus].sort((a, b) => {
-                return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
-              });
-              
-              sortedStatuses.forEach(status => {
-                const color = statusColors[status.status] || 'primary';
-                const icon = statusIcons[status.status] || 'circle';
-            %>
-              <a href="/tickets?status=<%= status.status.toLowerCase() %>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <div>
-                  <i class="fas fa-<%= icon %> text-<%= color %> me-2"></i><%= status.status %>
-                </div>
-                <span class="badge bg-<%= color %> <%= status.status === 'Pending' ? 'text-dark' : '' %> rounded-pill">
-                  <%= status.count %>
-                </span>
-              </a>
-            <% }); %>
+          
+          <div class="text-end mt-3">
+            <a href="/dashboard/reports/monthly-summary?month=<%= data.currentMonth %>&year=<%= data.currentYear %>" class="btn btn-primary">
+              View Full Report
+            </a>
           </div>
         <% } else { %>
-          <div class="text-center p-4">
-            <p class="text-muted mb-0">No ticket status data available</p>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No ticket data available for the current month.
           </div>
         <% } %>
       </div>
     </div>
   </div>
-  
-  <div class="col-md-4 mb-4">
-    <div class="card shadow-sm h-100 dashboard-card">
+</div>
+
+<!-- Quick Links -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
       <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0"><i class="fas fa-user-cog me-2"></i>Admin Actions</h5>
-      </div>
-      <div class="card-body">
-        <div class="list-group">
-          <a href="/auth/admin/register" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-            <div>
-              <i class="fas fa-user-plus me-2"></i>Register New User
-            </div>
-            <i class="fas fa-chevron-right"></i>
-          </a>
-          <a href="/users" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-            <div>
-              <i class="fas fa-users me-2"></i>Manage Users
-            </div>
-            <i class="fas fa-chevron-right"></i>
-          </a>
-          <a href="/offices" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-            <div>
-              <i class="fas fa-building me-2"></i>Manage Offices
-            </div>
-            <i class="fas fa-chevron-right"></i>
-          </a>
-          <a href="/equipment/create" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-            <div>
-              <i class="fas fa-plus-circle me-2"></i>Add Equipment
-            </div>
-            <i class="fas fa-chevron-right"></i>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="col-md-8 mb-4">
-    <div class="card shadow-sm h-100 dashboard-card">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Quick Stats</h5>
+        <h5 class="mb-0"><i class="fas fa-link me-2"></i>Quick Links</h5>
       </div>
       <div class="card-body">
         <div class="row">
-          <div class="col-md-4 mb-3 mb-md-0">
-            <div class="card bg-light">
-              <div class="card-body text-center">
-                <h2 class="text-primary mb-0 dashboard-stat">
-                  <% 
-                    let totalUsers = 0;
-                    if (data.usersByRole) {
-                      data.usersByRole.forEach(role => {
-                        totalUsers += parseInt(role.count);
-                      });
-                    }
-                  %>
-                  <%= totalUsers %>
-                </h2>
-                <p class="text-muted mb-0">Total Users</p>
-              </div>
-            </div>
+          <div class="col-md-4 mb-3">
+            <a href="/tickets" class="btn btn-outline-primary w-100">
+              <i class="fas fa-ticket-alt me-2"></i>View All Tickets
+            </a>
           </div>
-          
-          <div class="col-md-4 mb-3 mb-md-0">
-            <div class="card bg-light">
-              <div class="card-body text-center">
-                <h2 class="text-success mb-0 dashboard-stat">
-                  <% 
-                    let resolvedTickets = 0;
-                    if (data.ticketsByStatus) {
-                      const resolvedData = data.ticketsByStatus.find(t => t.status === 'Resolved');
-                      if (resolvedData) resolvedTickets = resolvedData.count;
-                    }
-                  %>
-                  <%= resolvedTickets %>
-                </h2>
-                <p class="text-muted mb-0">Resolved Tickets</p>
-              </div>
-            </div>
+          <div class="col-md-4 mb-3">
+            <a href="/tickets?status=open" class="btn btn-outline-warning w-100">
+              <i class="fas fa-exclamation-circle me-2"></i>View Open Tickets
+            </a>
           </div>
-          
-          <div class="col-md-4">
-            <div class="card bg-light">
-              <div class="card-body text-center">
-                <h2 class="text-danger mb-0 dashboard-stat">
-                  <% 
-                    let pendingTickets = 0;
-                    if (data.ticketsByStatus) {
-                      const pendingData = data.ticketsByStatus.find(t => t.status === 'Pending');
-                      if (pendingData) pendingTickets = pendingData.count;
-                    }
-                  %>
-                  <%= pendingTickets %>
-                </h2>
-                <p class="text-muted mb-0">Pending Tickets</p>
-              </div>
-            </div>
+          <div class="col-md-4 mb-3">
+            <a href="/equipment" class="btn btn-outline-secondary w-100">
+              <i class="fas fa-desktop me-2"></i>View Equipment
+            </a>
           </div>
         </div>
       </div>

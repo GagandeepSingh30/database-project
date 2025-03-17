@@ -1,0 +1,161 @@
+<%- include('../../partials/header.ejs') %>
+
+<div class="container mt-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Monthly Ticket Summary</li>
+    </ol>
+  </nav>
+  
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">
+        <i class="fas fa-calendar-alt me-2"></i>Monthly Ticket Summary - <%= new Date(0, month-1).toLocaleString('default', { month: 'long' }) %> <%= year %>
+      </h4>
+      <form action="/dashboard/reports/monthly-summary" method="GET" class="d-flex">
+        <select class="form-select form-select-sm me-2" name="month" style="width: auto;">
+          <% for(let i = 1; i <= 12; i++) { %>
+            <option value="<%= i %>" <%= i == month ? 'selected' : '' %>><%= new Date(0, i-1).toLocaleString('default', { month: 'long' }) %></option>
+          <% } %>
+        </select>
+        <select class="form-select form-select-sm me-2" name="year" style="width: auto;">
+          <% for(let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) { %>
+            <option value="<%= i %>" <%= i == year ? 'selected' : '' %>><%= i %></option>
+          <% } %>
+        </select>
+        <button type="submit" class="btn btn-sm btn-light">Update</button>
+      </form>
+    </div>
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h2 class="text-primary mb-0"><%= report.totalTickets %></h2>
+              <p class="text-muted mb-0">Total Tickets</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h2 class="text-warning mb-0"><%= report.openCases %></h2>
+              <p class="text-muted mb-0">Open Cases</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h2 class="text-success mb-0"><%= report.closedCases %></h2>
+              <p class="text-muted mb-0">Closed Cases</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card bg-light">
+            <div class="card-body text-center">
+              <h2 class="text-info mb-0"><%= report.totalTimeSpent %> hrs</h2>
+              <p class="text-muted mb-0">Total Time Spent</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">Case Status Distribution</h5>
+            </div>
+            <div class="card-body">
+              <div class="progress" style="height: 30px;">
+                <div class="progress-bar bg-warning" role="progressbar" style="width: <%= (report.openCases / report.totalTickets) * 100 %>%;" aria-valuenow="<%= report.openCases %>" aria-valuemin="0" aria-valuemax="<%= report.totalTickets %>">
+                  <%= report.openCases %> Open (<%= Math.round((report.openCases / report.totalTickets) * 100) %>%)
+                </div>
+                <div class="progress-bar bg-success" role="progressbar" style="width: <%= (report.closedCases / report.totalTickets) * 100 %>%;" aria-valuenow="<%= report.closedCases %>" aria-valuemin="0" aria-valuemax="<%= report.totalTickets %>">
+                  <%= report.closedCases %> Closed (<%= Math.round((report.closedCases / report.totalTickets) * 100) %>%)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">Time Metrics</h5>
+            </div>
+            <div class="card-body">
+              <p><strong>Average Time Per Case:</strong> <%= report.averageTimePerCase %> hours</p>
+              <p><strong>Total Time Spent:</strong> <%= report.totalTimeSpent %> hours</p>
+              <p><strong>Efficiency Rate:</strong> <%= report.closedCases > 0 ? Math.round((report.closedCases / report.totalTickets) * 100) : 0 %>%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table table-hover" id="ticketsTable">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Assigned To</th>
+              <th>Created</th>
+              <th>Time Spent (hrs)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% report.tickets.forEach(ticket => { 
+              let timeSpent = 0;
+              if (ticket.resolvedAt && ticket.createdAt) {
+                const resolvedDate = new Date(ticket.resolvedAt);
+                const createdDate = new Date(ticket.createdAt);
+                timeSpent = Math.round(((resolvedDate - createdDate) / (1000 * 60 * 60)) * 10) / 10;
+              }
+            %>
+              <tr>
+                <td>#<%= ticket.id %></td>
+                <td><%= ticket.title %></td>
+                <td>
+                  <span class="badge bg-<%= 
+                    ticket.status === 'open' ? 'primary' : 
+                    ticket.status === 'assigned' ? 'info' :
+                    ticket.status === 'in_progress' ? 'warning' :
+                    ticket.status === 'on_hold' ? 'secondary' :
+                    ticket.status === 'resolved' ? 'success' : 'dark'
+                  %>">
+                    <%= ticket.status.replace('_', ' ') %>
+                  </span>
+                </td>
+                <td>
+                  <%= ticket.assignee ? `${ticket.assignee.firstName} ${ticket.assignee.lastName}` : 'Unassigned' %>
+                </td>
+                <td><%= new Date(ticket.createdAt).toLocaleDateString() %></td>
+                <td><%= timeSpent %></td>
+                <td>
+                  <a href="/tickets/<%= ticket.id %>" class="btn btn-sm btn-primary">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#ticketsTable').DataTable({
+      order: [[0, 'desc']],
+      pageLength: 10,
+      lengthMenu: [10, 25, 50, 100]
+    });
+  });
+</script> 

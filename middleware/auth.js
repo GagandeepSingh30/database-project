@@ -64,4 +64,36 @@ exports.isTechnicianOrManager = (req, res, next) => {
   }
   req.flash('error_msg', 'Only IT Technicians or Managers can access this resource');
   res.redirect('/');
+};
+
+// New middleware for ticket-specific permissions
+
+// Only helpdesk operators can create tickets
+exports.canCreateTicket = (req, res, next) => {
+  if (req.user && req.user.role === 'helpdesk') {
+    return next();
+  }
+  req.flash('error_msg', 'Only Helpdesk Operators can create tickets');
+  res.redirect('/tickets');
+};
+
+// Only technicians can update ticket status
+exports.canUpdateTicketStatus = (req, res, next) => {
+  if (req.user && req.user.role === 'technician') {
+    return next();
+  }
+  req.flash('error_msg', 'Only IT Technicians can update ticket status');
+  res.redirect('/tickets');
+};
+
+// Managers can only view tickets, not modify them
+exports.canViewTicketOnly = (req, res, next) => {
+  if (req.method === 'GET') {
+    return next();
+  }
+  if (req.user && req.user.role === 'manager') {
+    req.flash('error_msg', 'Managers can only view tickets, not modify them');
+    return res.redirect('/tickets');
+  }
+  return next();
 }; 

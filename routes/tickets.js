@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const { Ticket, User, Equipment, Comment, Office, Sequelize } = require('../models');
-const { ensureAuthenticated, isHelpdesk, isTechnician, isManager, isHelpdeskOrManager } = require('../middleware/auth');
+const { 
+  ensureAuthenticated, 
+  isHelpdesk, 
+  isTechnician, 
+  isManager, 
+  isHelpdeskOrManager,
+  canCreateTicket,
+  canUpdateTicketStatus,
+  canViewTicketOnly
+} = require('../middleware/auth');
 
 // Get all tickets - GET
 router.get('/', ensureAuthenticated, async (req, res) => {
@@ -61,7 +70,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
 });
 
 // Create ticket page - GET (only for helpdesk operators)
-router.get('/create', ensureAuthenticated, isHelpdesk, async (req, res) => {
+router.get('/create', ensureAuthenticated, canCreateTicket, async (req, res) => {
   try {
     // Get all equipment for the dropdown
     const equipment = await Equipment.findAll({
@@ -82,7 +91,7 @@ router.get('/create', ensureAuthenticated, isHelpdesk, async (req, res) => {
 });
 
 // Create ticket - POST (only for helpdesk operators)
-router.post('/', ensureAuthenticated, isHelpdesk, async (req, res) => {
+router.post('/', ensureAuthenticated, canCreateTicket, async (req, res) => {
   try {
     const { title, description, priority, equipmentId } = req.body;
     const errors = [];
@@ -126,7 +135,7 @@ router.post('/', ensureAuthenticated, isHelpdesk, async (req, res) => {
 });
 
 // View ticket details - GET
-router.get('/:id', ensureAuthenticated, async (req, res) => {
+router.get('/:id', ensureAuthenticated, canViewTicketOnly, async (req, res) => {
   try {
     const ticket = await Ticket.findByPk(req.params.id, {
       include: [
@@ -163,8 +172,8 @@ router.get('/:id', ensureAuthenticated, async (req, res) => {
   }
 });
 
-// Assign ticket - POST (for managers and helpdesk operators)
-router.post('/:id/assign', ensureAuthenticated, isHelpdeskOrManager, async (req, res) => {
+// Assign ticket - POST (for helpdesk operators only, not managers)
+router.post('/:id/assign', ensureAuthenticated, canCreateTicket, async (req, res) => {
   try {
     const { assignedTo } = req.body;
     const ticket = await Ticket.findByPk(req.params.id);
@@ -197,8 +206,8 @@ router.post('/:id/assign', ensureAuthenticated, isHelpdeskOrManager, async (req,
   }
 });
 
-// Update ticket status - POST
-router.post('/:id/status', ensureAuthenticated, async (req, res) => {
+// Update ticket status - POST (only for technicians)
+router.post('/:id/status', ensureAuthenticated, canUpdateTicketStatus, async (req, res) => {
   try {
     const { status, resolutionNotes } = req.body;
     const ticket = await Ticket.findByPk(req.params.id);
@@ -208,48 +217,35 @@ router.post('/:id/status', ensureAuthenticated, async (req, res) => {
       return res.redirect('/tickets');
     }
 
-    // Check permissions based on status change
-    if (status === 'in_progress' || status === 'on_hold') {
-      // Only assigned technician or manager can change to these statuses
-      if (req.user.role !== 'manager' && ticket.assignedTo !== req.user.id) {
-        req.flash('error_msg', 'You do not have permission to update this ticket');
-        return res.redirect(`/tickets/${ticket.id}`);
-      }
-    } else if (status === 'resolved') {
-      // Only assigned technician or manager can resolve
-      if (req.user.role !== 'manager' && ticket.assignedTo !== req.user.id) {
-        req.flash('error_msg', 'You do not have permission to resolve this ticket');
-        return res.redirect(`/tickets/${ticket.id}`);
-      }
-      
-      // Require resolution notes
-      if (!resolutionNotes) {
-        req.flash('error_msg', 'Resolution notes are required when resolving a ticket');
-        return res.redirect(`/tickets/${ticket.id}`);
-      }
-      
-      ticket.resolutionNotes = resolutionNotes;
-      ticket.resolvedAt = new Date();
-    } else if (status === 'closed') {
-      // Only helpdesk or manager can close
-      if (req.user.role !== 'helpdesk' && req.user.role !== 'manager') {
-        req.flash('error_msg', 'Only Helpdesk Operators or Managers can close tickets');
-        return res.redirect(`/tickets/${ticket.id}`);
-      }
-      
-      ticket.closedAt = new Date();
+    // Check if technician is assigned to this ticket
+    if (ticket.assignedTo !== req.user.id) {
+      req.flash('error_msg', 'You can only update tickets assigned to you');
+      return res.redirect(`/tickets/${ticket.id}`);
     }
 
+    // Require resolution notes for any status update
+    if (!resolutionNotes) {
+      req.flash('error_msg', 'Description is required when updating a ticket status');
+      return res.redirect(`/tickets/${ticket.id}`);
+    }
+    
     // Update ticket status
     ticket.status = status;
+    
+    // Add resolution notes if provided
+    if (status === 'resolved') {
+      ticket.resolutionNotes = resolutionNotes;
+      ticket.resolvedAt = new Date();
+    }
+    
     await ticket.save();
 
-    // Add comment about status change
+    // Add comment about status change with the description
     await Comment.create({
-      content: `Ticket status changed to ${status}`,
+      content: `Ticket status changed to ${status}. Description: ${resolutionNotes}`,
       ticketId: ticket.id,
       userId: req.user.id,
-      isInternal: true
+      isInternal: false
     });
 
     req.flash('success_msg', 'Ticket status updated successfully');
@@ -264,6 +260,12 @@ router.post('/:id/status', ensureAuthenticated, async (req, res) => {
 // Add comment - POST
 router.post('/:id/comments', ensureAuthenticated, async (req, res) => {
   try {
+    // Managers cannot add comments
+    if (req.user.role === 'manager') {
+      req.flash('error_msg', 'Managers cannot add comments to tickets');
+      return res.redirect(`/tickets/${req.params.id}`);
+    }
+    
     const { content, isInternal } = req.body;
     const ticketId = req.params.id;
 
@@ -272,10 +274,13 @@ router.post('/:id/comments', ensureAuthenticated, async (req, res) => {
       return res.redirect(`/tickets/${ticketId}`);
     }
 
+    // Only technicians can add internal comments
+    const isInternalComment = req.user.role === 'technician' && isInternal === 'on';
+
     // Create comment
     await Comment.create({
       content,
-      isInternal: isInternal === 'on',
+      isInternal: isInternalComment,
       ticketId,
       userId: req.user.id
     });

@@ -1,0 +1,228 @@
+<%- include('../../partials/header.ejs') %>
+
+<div class="container mt-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Technician Summary</li>
+    </ol>
+  </nav>
+  
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">
+        <i class="fas fa-users-cog me-2"></i>Technician Job Summary
+      </h4>
+      <form action="/dashboard/reports/technician-summary" method="GET" class="d-flex">
+        <select class="form-select form-select-sm me-2" name="month" style="width: auto;">
+          <% for(let i = 1; i <= 12; i++) { %>
+            <option value="<%= i %>" <%= i == month ? 'selected' : '' %>><%= new Date(0, i-1).toLocaleString('default', { month: 'long' }) %></option>
+          <% } %>
+        </select>
+        <select class="form-select form-select-sm me-2" name="year" style="width: auto;">
+          <% for(let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) { %>
+            <option value="<%= i %>" <%= i == year ? 'selected' : '' %>><%= i %></option>
+          <% } %>
+        </select>
+        <button type="submit" class="btn btn-sm btn-light">Update</button>
+      </form>
+    </div>
+    <div class="card-body">
+      <% if (technicians.length === 0) { %>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>No technician data available for the selected month.
+        </div>
+      <% } else { %>
+        <div class="row mb-4">
+          <div class="col-md-3 mb-3">
+            <div class="card bg-light">
+              <div class="card-body text-center">
+                <h2 class="text-primary mb-0"><%= totalJobs %></h2>
+                <p class="text-muted mb-0">Total Jobs</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="card bg-light">
+              <div class="card-body text-center">
+                <h2 class="text-success mb-0"><%= resolvedJobs %></h2>
+                <p class="text-muted mb-0">Resolved Jobs</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="card bg-light">
+              <div class="card-body text-center">
+                <h2 class="text-warning mb-0"><%= pendingJobs %></h2>
+                <p class="text-muted mb-0">Pending Jobs</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="card bg-light">
+              <div class="card-body text-center">
+                <h2 class="text-info mb-0"><%= technicians.length %></h2>
+                <p class="text-muted mb-0">Active Technicians</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Workload Distribution</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="technicianTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Technician</th>
+                    <th>Total Jobs</th>
+                    <th>Resolved</th>
+                    <th>Pending</th>
+                    <th>Avg. Resolution Time</th>
+                    <th>Workload</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% technicians.forEach(tech => { %>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar avatar-sm me-2 bg-<%= getRandomColor(tech.id) %>">
+                            <span class="avatar-text"><%= tech.firstName.charAt(0) %><%= tech.lastName.charAt(0) %></span>
+                          </div>
+                          <div>
+                            <%= tech.firstName %> <%= tech.lastName %>
+                            <small class="d-block text-muted"><%= tech.email %></small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><%= tech.totalJobs %></td>
+                      <td><span class="text-success"><%= tech.resolvedJobs %></span></td>
+                      <td><span class="text-warning"><%= tech.pendingJobs %></span></td>
+                      <td><%= tech.avgResolutionTime %> hrs</td>
+                      <td>
+                        <div class="progress" style="height: 8px;">
+                          <div class="progress-bar bg-<%= getWorkloadColor(tech.workloadPercentage) %>" role="progressbar" 
+                            style="width: <%= tech.workloadPercentage %>%;" 
+                            aria-valuenow="<%= tech.workloadPercentage %>" aria-valuemin="0" aria-valuemax="100">
+                          </div>
+                        </div>
+                        <small class="text-muted"><%= tech.workloadPercentage %>% of total</small>
+                      </td>
+                      <td>
+                        <a href="/dashboard/reports/technician-detail?technicianId=<%= tech.id %>&month=<%= month %>&year=<%= year %>" class="btn btn-sm btn-primary">
+                          <i class="fas fa-eye"></i> Details
+                        </a>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Top Performers</h5>
+              </div>
+              <div class="card-body">
+                <% if (topPerformers.length === 0) { %>
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>No performance data available.
+                  </div>
+                <% } else { %>
+                  <div class="list-group">
+                    <% topPerformers.forEach((tech, index) => { %>
+                      <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                          <span class="badge bg-<%= index === 0 ? 'warning' : 'light text-dark' %> me-2">#<%= index + 1 %></span>
+                          <strong><%= tech.firstName %> <%= tech.lastName %></strong>
+                        </div>
+                        <div>
+                          <span class="badge bg-success"><%= tech.resolvedJobs %> resolved</span>
+                          <small class="text-muted ms-2"><%= tech.avgResolutionTime %> hrs avg</small>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Issue Type Distribution</h5>
+              </div>
+              <div class="card-body">
+                <% if (issueTypes.length === 0) { %>
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>No issue type data available.
+                  </div>
+                <% } else { %>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Issue Type</th>
+                          <th>Count</th>
+                          <th>Percentage</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% issueTypes.forEach(issue => { %>
+                          <tr>
+                            <td><%= issue.type %></td>
+                            <td><%= issue.count %></td>
+                            <td>
+                              <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" 
+                                  style="width: <%= issue.percentage %>%;" 
+                                  aria-valuenow="<%= issue.percentage %>" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                              </div>
+                              <small><%= issue.percentage %>%</small>
+                            </td>
+                          </tr>
+                        <% }); %>
+                      </tbody>
+                    </table>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#technicianTable').DataTable({
+      order: [[1, 'desc']],
+      pageLength: 10
+    });
+  });
+  
+  function getRandomColor(id) {
+    const colors = ['primary', 'success', 'danger', 'warning', 'info'];
+    return colors[id % colors.length];
+  }
+  
+  function getWorkloadColor(percentage) {
+    if (percentage > 75) return 'danger';
+    if (percentage > 50) return 'warning';
+    if (percentage > 25) return 'info';
+    return 'success';
+  }
+</script> 
